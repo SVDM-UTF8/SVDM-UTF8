@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificación de Acceso - Sistema Persistente</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 500px;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        /* --- ESTILOS PARA LA IMAGEN INSTITUCIONAL --- */
+        .logo {
+            text-align: center;
+            padding: 25px 0 15px 0;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .logo img {
+            max-width: 120px;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            opacity: 0.9;
+            transition: all 0.3s ease;
+            border: 3px solid white;
+        }
+
+        .logo img:hover {
+            opacity: 1;
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #3a7bd5, #00d2ff);
+            color: white;
+            padding: 20px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 25px;
+        }
+
+        .status-card {
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+
+        .loading {
+            background-color: #fff4e5;
+            color: #e67700;
+        }
+
+        .authorized {
+            background-color: #d5f5e3;
+            color: #27ae60;
+            border: 2px solid #2ecc71;
+        }
+
+        .unauthorized {
+            background-color: #fadbd8;
+            color: #c0392b;
+            border: 2px solid #e74c3c;
+        }
+
+        .device-info {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .device-info h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        button {
+            background: linear-gradient(135deg, #3a7bd5, #00d2ff);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 10px 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        #recovery-btn {
+            background: linear-gradient(135deg, #ff7e5f, #feb47b);
+        }
+
+        .instructions {
+            background-color: #eaf2f8;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: left;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .instructions h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .instructions ol {
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+        }
+
+        .footer {
+            margin-top: 20px;
+            color: white;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .admin-info {
+            background-color: #e8f4fc;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        .admin-info h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .success-badge {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+
+        .warning-badge {
+            display: inline-block;
+            background-color: #ffc107;
+            color: #000;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+
+        .danger-badge {
+            display: inline-block;
+            background-color: #dc3545;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+
+        .fingerprint-info {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 12px;
+            text-align: center;
+            color: #155724;
+        }
+
+        .persistence-info {
+            background-color: #f0f8ff;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: left;
+        }
+
+        .persistence-info h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .storage-method {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .storage-method:last-child {
+            border-bottom: none;
+        }
+
+        .persistence-note {
+            margin-top: 10px;
+            font-style: italic;
+            text-align: center;
+        }
+
+        .recovery-info {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        /* Modal de Recuperación */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal h3 {
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 12px;
+            margin: 15px 0;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .modal-button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .modal-primary {
+            background: #28a745;
+            color: white;
+        }
+
+        .modal-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .recovery-message {
+            margin-top: 15px;
+            font-size: 14px;
+            min-height: 20px;
+        }
+
+        /* Estilos responsivos para la imagen */
+        @media (max-width: 480px) {
+            .logo img {
+                max-width: 100px;
+            }
+            
+            .logo {
+                padding: 20px 0 15px 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="images.jpg" alt="Logo Institucional" onerror="this.style.display='none'">
+        </div>
+        <div class="header">
+            <h1>Sistema de Verificación de Acceso de Dispositivos Moviles</h1>
+            <p>Verificación en tiempo real con persistencia mejorada</p>
+        </div>
+
+        <div class="content">
+            <div id="status" class="status-card loading">
+                Verificando dispositivo...
+            </div>
+
+            <div class="device-info">
+                <h3>Información del Dispositivo</h3>
+                <div class="info-row">
+                    <span>ID del Dispositivo:</span>
+                    <span id="device-id">Calculando...</span>
+                </div>
+                <div class="info-row">
+                    <span>Navegador:</span>
+                    <span id="browser">Detectando...</span>
+                </div>
+                <div class="info-row">
+                    <span>Plataforma:</span>
+                    <span id="platform">Detectando...</span>
+                </div>
+                <div class="info-row">
+                    <span>Tipo de ID:</span>
+                    <span id="id-type">Standard</span>
+                </div>
+            </div>
+
+            <div class="persistence-info">
+                <h3>🛡️ Sistema de Persistencia Mejorado</h3>
+                <div class="persistence-status">
+                    <div class="storage-method">
+                        <span>Local Storage:</span>
+                        <span id="local-status" class="success-badge">✓ Activo</span>
+                    </div>
+                    <div class="storage-method">
+                        <span>Session Backup:</span>
+                        <span id="session-status" class="success-badge">✓ Activo</span>
+                    </div>
+                    <div class="storage-method">
+                        <span>Base de Datos:</span>
+                        <span id="db-status" class="success-badge">✓ Activo</span>
+                    </div>
+                    <div class="storage-method">
+                        <span>Cookies:</span>
+                        <span id="cookie-status" class="success-badge">✓ Activo</span>
+                    </div>
+                </div>
+                <p class="persistence-note">
+                </p>
+            </div>
+
+            <div class="fingerprint-info">
+                <strong>🔒 ID Encriptado Mejorado</strong> - Persistencia multicapa y seguridad avanzada
+            </div>
+
+            <button id="retry-btn">Reintentar Verificación</button>
+            <button id="recovery-btn">¿Perdió su acceso? Recuperar aquí</button>
+
+            <div id="recovery-code-display" class="recovery-info" style="display: none;">
+                <!-- Aquí se mostrará el código de recuperación cuando se genere uno nuevo -->
+            </div>
+
+            <div class="instructions">
+                <h3>Instrucciones:</h3>
+                <ol>
+                    <li>Este sistema verifica si su dispositivo móvil tiene acceso autorizado</li>
+                    <li>El acceso se concede basado en el ID único de su dispositivo</li>
+                    <li>Guarde su código de recuperación para casos de emergencia</li>
+                    <li>Si no tiene acceso, contacte al administrador para registrar su dispositivo</li>
+                </ol>
+            </div>
+
+            <div class="admin-info">
+                <h3>Estado del Sistema <span class="success-badge" id="connection-status">Conectado</span></h3>
+                <p><strong>Modo:</strong> Verificación en tiempo real</p>
+                <p><strong>Seguridad:</strong> ID Persistente Multicapa <span class="success-badge">✓</span></p>
+                <p><strong>Recuperación:</strong> Sistema de códigos activo <span class="success-badge">✓</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Recuperación -->
+    <div id="recoveryModal" class="modal">
+        <div class="modal-content">
+            <h3>🔑 Recuperar Acceso</h3>
+            <p>Ingrese su código de recuperación:</p>
+            <input type="text" id="recoveryCodeInput" class="modal-input" placeholder="Ej: RC-A1B2C3D4">
+            <div class="modal-buttons">
+                <button class="modal-button modal-primary" onclick="attemptRecovery()">Recuperar</button>
+                <button class="modal-button modal-secondary" onclick="hideRecoveryModal()">Cancelar</button>
+            </div>
+            <p id="recoveryMessage" class="recovery-message"></p>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Sistema de Verificación de Acceso con Persistencia Mejorada</p>
+    </div>
+
+    <script>
+        // URL de tu Google Apps Script
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx9Fe14sQN6gTayGYKB8PO0gFGGN7tnMwjakrcCB_vdoA91_loKG-wQ6A-I7HiikWzh/exec';
+
+        class PersistentDeviceIdentifier {
+            constructor() {
+                this.storageKey = 'deviceId_persistent_v4';
+                this.backupKey = 'backupDeviceId_session';
+            }
+
+            async generateDeviceId() {
+                try {
+                    console.log('Buscando ID existente...');
+                    
+                    // 1. BUSCAR EN MÚLTIPLES UBICACIONES
+                    let deviceId = await this.findExistingId();
+                    
+                    if (deviceId) {
+                        console.log('ID existente recuperado:', deviceId.substring(0, 20) + '...');
+                        document.getElementById('id-type').textContent = 'Persistente';
+                        return deviceId;
+                    }
+
+                    // 2. GENERAR NUEVO ID
+                    console.log('Generando nuevo ID persistente...');
+                    deviceId = await this.createHardwareBasedId();
+                    
+                    // 3. GUARDAR EN TODAS LAS UBICACIONES
+                    await this.saveIdEverywhere(deviceId);
+                    
+                    document.getElementById('id-type').textContent = 'Nuevo Persistente';
+                    console.log('Nuevo ID generado:', deviceId.substring(0, 20) + '...');
+                    return deviceId;
+
+                } catch (error) {
+                    console.error('Error generando ID, usando fallback:', error);
+                    return this.generateExtremeFallbackId();
+                }
+            }
+
+            // BUSCAR EN TODAS LAS UBICACIONES POSIBLES
+            async findExistingId() {
+                try {
+                    // 1. localStorage (principal)
+                    let deviceId = localStorage.getItem(this.storageKey);
+                    if (deviceId) {
+                        this.updateStorageStatus('local-status', true);
+                        return deviceId;
+                    }
+
+                    // 2. sessionStorage (secundario)
+                    deviceId = sessionStorage.getItem(this.backupKey);
+                    if (deviceId) {
+                        this.updateStorageStatus('session-status', true);
+                        this.restoreFromSession(deviceId);
+                        return deviceId;
+                    }
+
+                    // 3. IndexedDB (terciario - persistente)
+                    deviceId = await this.getIdFromIndexedDB();
+                    if (deviceId) {
+                        this.updateStorageStatus('db-status', true);
+                        this.restoreFromIndexedDB(deviceId);
+                        return deviceId;
+                    }
+
+                    // 4. Cookies (como último recurso)
+                    deviceId = this.getIdFromCookies();
+                    if (deviceId) {
+                        this.updateStorageStatus('cookie-status', true);
+                        this.restoreFromCookies(deviceId);
+                        return deviceId;
+                    }
+
+                    return null;
+                } catch (error) {
+                    console.error('Error buscando ID existente:', error);
+                    return null;
+                }
+            }
+
+            // GENERAR ID BASADO EN HARDWARE (más persistente)
+            async createHardwareBasedId() {
+                try {
+                    const hardwareInfo = {
+                        // Elementos más persistentes
+                        userAgent: navigator.userAgent,
+                        platform: navigator.platform,
+                        language: navigator.language,
+                        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                        screen: `${screen.width}x${screen.height}`,
+                        cores: navigator.hardwareConcurrency || 'unknown',
+                        memory: navigator.deviceMemory || 'unknown',
+                        
+                        // Canvas fingerprinting (muy persistente)
+                        canvasFP: await this.generateCanvasFingerprint(),
+                        
+                        // Fuente de aleatoriedad
+                        salt: Date.now() + Math.random()
+                    };
+
+                    const infoString = JSON.stringify(hardwareInfo);
+                    return await this.advancedHash(infoString);
+                } catch (error) {
+                    console.error('Error en createHardwareBasedId:', error);
+                    throw error;
+                }
+            }
+
+            // FINGERPRINT DE CANVAS (muy persistente)
+            async generateCanvasFingerprint() {
+                return new Promise((resolve) => {
+                    try {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        canvas.width = 200;
+                        canvas.height = 50;
+                        
+                        ctx.textBaseline = 'top';
+                        ctx.font = '14px Arial';
+                        ctx.fillStyle = '#f60';
+                        ctx.fillRect(125, 1, 62, 20);
+                        ctx.fillStyle = '#069';
+                        ctx.fillText('Fingerprint', 2, 15);
+                        ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
+                        ctx.fillText('Fingerprint', 4, 17);
+                        
+                        resolve(canvas.toDataURL().substring(0, 100)); // Acortar para evitar problemas
+                    } catch (error) {
+                        console.error('Error en canvas fingerprint:', error);
+                        resolve('canvas_error');
+                    }
+                });
+            }
+
+            // HASH AVANZADO
+            async advancedHash(data) {
+                try {
+                    // Usar un método más simple y confiable
+                    const encoder = new TextEncoder();
+                    const dataBuffer = encoder.encode(data);
+                    
+                    if (window.crypto && crypto.subtle) {
+                        const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
+                        const hashArray = Array.from(new Uint8Array(hashBuffer));
+                        return 'device_' + hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 16);
+                    } else {
+                        // Fallback para navegadores más antiguos
+                        return this.simpleHash(data);
+                    }
+                } catch (error) {
+                    console.error('Error en advancedHash, usando simpleHash:', error);
+                    return this.simpleHash(data);
+                }
+            }
+
+            simpleHash(data) {
+                let hash = 0;
+                for (let i = 0; i < data.length; i++) {
+                    const char = data.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash;
+                }
+                return 'device_' + Math.abs(hash).toString(16);
+            }
+
+            // GUARDAR EN TODAS PARTES
+            async saveIdEverywhere(deviceId) {
+                try {
+                    // 1. localStorage
+                    localStorage.setItem(this.storageKey, deviceId);
+                    this.updateStorageStatus('local-status', true);
+                    
+                    // 2. sessionStorage
+                    sessionStorage.setItem(this.backupKey, deviceId);
+                    this.updateStorageStatus('session-status', true);
+                    
+                    // 3. IndexedDB
+                    const dbSuccess = await this.saveToIndexedDB(deviceId);
+                    this.updateStorageStatus('db-status', dbSuccess);
+                    
+                    // 4. Cookies (30 días)
+                    this.saveToCookies(deviceId);
+                    this.updateStorageStatus('cookie-status', true);
+                    
+                    console.log('ID guardado en múltiples ubicaciones');
+                } catch (error) {
+                    console.error('Error guardando ID:', error);
+                }
+            }
+
+            // INDEXEDDB (muy persistente)
+            async saveToIndexedDB(deviceId) {
+                return new Promise((resolve) => {
+                    try {
+                        if (!window.indexedDB) {
+                            resolve(false);
+                            return;
+                        }
+
+                        const request = indexedDB.open('DeviceStorage', 1);
+                        
+                        request.onerror = () => resolve(false);
+                        
+                        request.onsuccess = (event) => {
+                            const db = event.target.result;
+                            try {
+                                const transaction = db.transaction(['devices'], 'readwrite');
+                                const store = transaction.objectStore('devices');
+                                const putRequest = store.put({ id: 1, deviceId: deviceId, timestamp: Date.now() });
+                                
+                                putRequest.onsuccess = () => resolve(true);
+                                putRequest.onerror = () => resolve(false);
+                            } catch (error) {
+                                resolve(false);
+                            }
+                        };
+                        
+                        request.onupgradeneeded = (event) => {
+                            const db = event.target.result;
+                            if (!db.objectStoreNames.contains('devices')) {
+                                db.createObjectStore('devices', { keyPath: 'id' });
+                            }
+                        };
+                    } catch (error) {
+                        resolve(false);
+                    }
+                });
+            }
+
+            async getIdFromIndexedDB() {
+                return new Promise((resolve) => {
+                    try {
+                        if (!window.indexedDB) {
+                            resolve(null);
+                            return;
+                        }
+
+                        const request = indexedDB.open('DeviceStorage', 1);
+                        
+                        request.onsuccess = (event) => {
+                            const db = event.target.result;
+                            try {
+                                const transaction = db.transaction(['devices'], 'readonly');
+                                const store = transaction.objectStore('devices');
+                                const getRequest = store.get(1);
+                                
+                                getRequest.onsuccess = () => {
+                                    resolve(getRequest.result ? getRequest.result.deviceId : null);
+                                };
+                                getRequest.onerror = () => resolve(null);
+                            } catch (error) {
+                                resolve(null);
+                            }
+                        };
+                        
+                        request.onerror = () => resolve(null);
+                    } catch (error) {
+                        resolve(null);
+                    }
+                });
+            }
+
+            // COOKIES (muy persistente)
+            saveToCookies(deviceId) {
+                try {
+                    const expires = new Date();
+                    expires.setDate(expires.getDate() + 30); // 30 días
+                    
+                    document.cookie = `deviceId=${encodeURIComponent(deviceId)}; expires=${expires.toUTCString()}; path=/; SameSite=Strict`;
+                } catch (error) {
+                    console.error('Error guardando cookie:', error);
+                }
+            }
+
+            getIdFromCookies() {
+                try {
+                    const cookies = document.cookie.split(';');
+                    for (let cookie of cookies) {
+                        const [name, value] = cookie.trim().split('=');
+                        if (name === 'deviceId') {
+                            return decodeURIComponent(value);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error leyendo cookies:', error);
+                }
+                return null;
+            }
+
+            // MÉTODOS DE RESTAURACIÓN
+            restoreFromSession(deviceId) {
+                localStorage.setItem(this.storageKey, deviceId);
+                this.saveToCookies(deviceId);
+            }
+
+            async restoreFromIndexedDB(deviceId) {
+                localStorage.setItem(this.storageKey, deviceId);
+                sessionStorage.setItem(this.backupKey, deviceId);
+                this.saveToCookies(deviceId);
+            }
+
+            restoreFromCookies(deviceId) {
+                localStorage.setItem(this.storageKey, deviceId);
+                sessionStorage.setItem(this.backupKey, deviceId);
+            }
+
+            // ACTUALIZAR ESTADO DE ALMACENAMIENTO EN UI
+            updateStorageStatus(elementId, isActive) {
+                try {
+                    const element = document.getElementById(elementId);
+                    if (element) {
+                        if (isActive) {
+                            element.textContent = '✓ Activo';
+                            element.className = 'success-badge';
+                        } else {
+                            element.textContent = '✗ Inactivo';
+                            element.className = 'danger-badge';
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error actualizando estado UI:', error);
+                }
+            }
+
+            // FALLBACK EXTREMO
+            generateExtremeFallbackId() {
+                document.getElementById('id-type').textContent = 'Fallback';
+                
+                // Combinar información básica
+                const fallbackString = [
+                    navigator.userAgent,
+                    navigator.language,
+                    Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    navigator.platform,
+                    screen.width,
+                    screen.height,
+                    Date.now()
+                ].join('|');
+                
+                const deviceId = this.simpleHash(fallbackString);
+                
+                // Intentar guardar
+                try {
+                    localStorage.setItem(this.storageKey, deviceId);
+                    sessionStorage.setItem(this.backupKey, deviceId);
+                    this.saveToCookies(deviceId);
+                } catch (error) {
+                    console.error('Error guardando fallback ID:', error);
+                }
+                
+                return deviceId;
+            }
+        }
+
+        class RecoverySystem {
+            constructor() {
+                this.scriptURL = SCRIPT_URL;
+            }
+
+            // GENERAR CÓDIGO DE RECUPERACIÓN
+            generateRecoveryCode(deviceId) {
+                const recoveryCode = 'RC-' + Math.random().toString(36).substr(2, 8).toUpperCase();
+                const recoveryData = {
+                    code: recoveryCode,
+                    deviceId: deviceId,
+                    generated: Date.now(),
+                    expires: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 días
+                };
+                
+                localStorage.setItem('deviceRecoveryData', JSON.stringify(recoveryData));
+                return recoveryCode;
+            }
+
+            // MOSTRAR CÓDIGO AL USUARIO
+            showRecoveryCode(deviceId) {
+                try {
+                    const recoveryCode = this.generateRecoveryCode(deviceId);
+                    
+                    const recoveryDiv = document.getElementById('recovery-code-display');
+                    recoveryDiv.innerHTML = `
+                        <strong>🔑 Código de Recuperación:</strong>
+                        <code style="font-size: 18px; font-weight: bold; color: #e74c3c; display: block; margin: 10px 0;">${recoveryCode}</code>
+                        <small>Guarde este código en un lugar seguro. Lo necesitará si pierde acceso a su dispositivo.</small>
+                    `;
+                    recoveryDiv.style.display = 'block';
+                } catch (error) {
+                    console.error('Error mostrando código de recuperación:', error);
+                }
+            }
+
+            // RECUPERAR CON CÓDIGO (llama a Google Sheets)
+            async recoverWithCode(recoveryCode, newDeviceId) {
+                try {
+                    const response = await fetch(`${this.scriptURL}?action=recover&recoveryCode=${encodeURIComponent(recoveryCode)}&newDeviceId=${encodeURIComponent(newDeviceId)}&userAgent=${encodeURIComponent(navigator.userAgent)}`);
+                    
+                    if (!response.ok) {
+                        throw new Error('Error de conexión');
+                    }
+                    
+                    const result = await response.json();
+                    return result;
+                    
+                } catch (error) {
+                    console.error('Error en recuperación:', error);
+                    return { success: false, message: 'Error de conexión con el servidor' };
+                }
+            }
+        }
+
+        // INICIALIZACIÓN CUANDO EL DOM ESTÁ LISTO
+        document.addEventListener('DOMContentLoaded', function () {
+            const statusDiv = document.getElementById('status');
+            const deviceIdSpan = document.getElementById('device-id');
+            const browserSpan = document.getElementById('browser');
+            const platformSpan = document.getElementById('platform');
+            const retryBtn = document.getElementById('retry-btn');
+            const recoveryBtn = document.getElementById('recovery-btn');
+            const connectionStatus = document.getElementById('connection-status');
+
+            const deviceIdentifier = new PersistentDeviceIdentifier();
+            const recoverySystem = new RecoverySystem();
+
+            // Detectar información del navegador y plataforma
+            function detectBrowser() {
+                const ua = navigator.userAgent;
+                if (ua.includes('Chrome')) return 'Chrome';
+                if (ua.includes('Firefox')) return 'Firefox';
+                if (ua.includes('Safari')) return 'Safari';
+                if (ua.includes('Edge')) return 'Edge';
+                return 'Otro';
+            }
+
+            function detectPlatform() {
+                const ua = navigator.userAgent;
+                if (ua.includes('Android')) return 'Android';
+                if (ua.includes('iPhone') || ua.includes('iPad')) return 'iOS';
+                if (ua.includes('Windows')) return 'Windows';
+                if (ua.includes('Mac')) return 'Mac';
+                if (ua.includes('Linux')) return 'Linux';
+                return 'Desconocido';
+            }
+
+            browserSpan.textContent = detectBrowser();
+            platformSpan.textContent = detectPlatform();
+
+            // Función de verificación
+            async function verifyAccess(deviceId) {
+                try {
+                    console.log('Verificando dispositivo:', deviceId.substring(0, 20) + '...');
+
+                    const response = await fetch(`${SCRIPT_URL}?deviceId=${encodeURIComponent(deviceId)}`);
+
+                    if (!response.ok) {
+                        throw new Error(`Error HTTP: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+
+                    if (result.error) {
+                        throw new Error(result.error);
+                    }
+
+                    console.log('Respuesta del servidor:', result);
+                    return result.authorized;
+
+                } catch (error) {
+                    console.error('Error en verifyAccess:', error);
+                    connectionStatus.textContent = 'Error de conexión';
+                    connectionStatus.className = 'danger-badge';
+                    throw error;
+                }
+            }
+
+            // Función principal de verificación
+            async function checkAccess() {
+                statusDiv.className = 'status-card loading';
+                statusDiv.textContent = 'Generando ID seguro...';
+                connectionStatus.textContent = 'Conectando...';
+                connectionStatus.className = 'warning-badge';
+
+                try {
+                    // Generar ID
+                    const deviceId = await deviceIdentifier.generateDeviceId();
+                    deviceIdSpan.textContent = deviceId.length > 24 ? deviceId.substring(0, 24) + '...' : deviceId;
+
+                    // Mostrar código de recuperación solo la primera vez
+                    if (document.getElementById('id-type').textContent === 'Nuevo Persistente') {
+                        recoverySystem.showRecoveryCode(deviceId);
+                    }
+
+                    // Verificar acceso
+                    statusDiv.textContent = 'Conectando con servidor...';
+                    const isAuthorized = await verifyAccess(deviceId);
+
+                    // Mostrar resultado
+                    if (isAuthorized) {
+                        statusDiv.className = 'status-card authorized';
+                        statusDiv.textContent = '✓ ACCESO AUTORIZADO. Bienvenido.';
+                        connectionStatus.textContent = 'Conectado';
+                        connectionStatus.className = 'success-badge';
+                    } else {
+                        statusDiv.className = 'status-card unauthorized';
+                        statusDiv.textContent = '✗ ACCESO NO AUTORIZADO. Contacte al administrador.';
+                        connectionStatus.textContent = 'Conectado';
+                        connectionStatus.className = 'success-badge';
+                    }
+
+                } catch (error) {
+                    console.error('Error en checkAccess:', error);
+                    statusDiv.className = 'status-card unauthorized';
+
+                    if (error.message.includes('configura la URL')) {
+                        statusDiv.textContent = 'Error: URL no configurada.';
+                    } else if (error.message.includes('Failed to fetch')) {
+                        statusDiv.textContent = 'Error de conexión. Revise su internet.';
+                    } else {
+                        statusDiv.textContent = 'Error: ' + error.message;
+                    }
+                }
+            }
+
+            // Iniciar verificación al cargar
+            checkAccess();
+
+            // Botón reintentar
+            retryBtn.addEventListener('click', checkAccess);
+
+            // Botón recuperación
+            recoveryBtn.addEventListener('click', showRecoveryModal);
+        });
+
+        // FUNCIONES GLOBALES PARA EL MODAL DE RECUPERACIÓN
+        function showRecoveryModal() {
+            document.getElementById('recoveryModal').style.display = 'flex';
+            document.getElementById('recoveryCodeInput').value = '';
+            document.getElementById('recoveryMessage').textContent = '';
+        }
+
+        function hideRecoveryModal() {
+            document.getElementById('recoveryModal').style.display = 'none';
+        }
+
+        async function attemptRecovery() {
+            const codeInput = document.getElementById('recoveryCodeInput');
+            const messageDiv = document.getElementById('recoveryMessage');
+            const code = codeInput.value.trim();
+            
+            if (!code) {
+                messageDiv.style.color = '#dc3545';
+                messageDiv.textContent = 'Por favor ingrese un código de recuperación';
+                return;
+            }
+            
+            // Validar formato del código
+            if (!code.match(/^RC-[A-Z0-9]{8}$/)) {
+                messageDiv.style.color = '#dc3545';
+                messageDiv.textContent = 'Formato de código inválido. Debe ser: RC-XXXXXXX (8 caracteres)';
+                return;
+            }
+            
+            messageDiv.style.color = '#007bff';
+            messageDiv.textContent = 'Verificando código...';
+            
+            try {
+                // Generar nuevo ID para el dispositivo
+                const deviceIdentifier = new PersistentDeviceIdentifier();
+                const newDeviceId = await deviceIdentifier.createHardwareBasedId();
+                
+                // Intentar recuperación
+                const recoverySystem = new RecoverySystem();
+                const result = await recoverySystem.recoverWithCode(code, newDeviceId);
+                
+                if (result.success) {
+                    messageDiv.style.color = '#28a745';
+                    messageDiv.textContent = '✓ Acceso recuperado exitosamente! Recargando...';
+                    
+                    // Guardar nuevo ID y recargar
+                    await deviceIdentifier.saveIdEverywhere(newDeviceId);
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    messageDiv.style.color = '#dc3545';
+                    messageDiv.textContent = '✗ ' + result.message;
+                }
+            } catch (error) {
+                messageDiv.style.color = '#dc3545';
+                messageDiv.textContent = '✗ Error durante la recuperación: ' + error.message;
+            }
+        }
+    </script>
+</body>
+
+</html>
