@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enrolar Dispositivo</title>
+    <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
+    <style>
+        body { font-family: sans-serif; display: grid; place-items: center; min-height: 90vh; background: #f4f4f4; }
+        .container { background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        input, button { width: 100%; padding: 12px; margin-bottom: 10px; box-sizing: border-box; font-size: 1rem; }
+        button { background: #004a99; color: white; border: none; cursor: pointer; }
+        button:disabled { background: #ccc; }
+        #message { margin-top: 15px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Registrar Nuevo Dispositivo</h2>
+        <input type="text" id="agent-name" placeholder="Nombre completo del Agente">
+        <button id="enroll-button">Enrolar Dispositivo</button>
+        <div id="message"></div>
+    </div>
+
+    <script>
+        // -----------------------------------------------------------------
+        // --- Pega aquí la MISMA URL de tu App Script ---
+        // -----------------------------------------------------------------
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby1-Fgsa_Oyfoh-cOQUHH9gcDMn3Q58b9Bi3t-KZYQyym4vU6iBUkRI1scZO6q1Qy-9CA/exec';
+        
+        const LOCAL_STORAGE_KEY = 'federal_device_uuid';
+
+        const nameInput = document.getElementById('agent-name');
+        const enrollButton = document.getElementById('enroll-button');
+        const messageDiv = document.getElementById('message');
+
+        /**
+         * Genera un UUID v4 (simple)
+         */
+        function generateUUID() {
+            return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+                (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+            );
+        }
+
+        async function enrollDevice() {
+            const agentName = nameInput.value.trim();
+            if (!agentName) {
+                messageDiv.textContent = 'Por favor, ingrese un nombre.';
+                messageDiv.style.color = 'red';
+                return;
+            }
+
+            enrollButton.disabled = true;
+            messageDiv.textContent = 'Generando huella, por favor espere...';
+            messageDiv.style.color = 'black';
+
+            try {
+                // 1. Generar los dos IDs
+                const persistentId = generateUUID();
+                const fp = await FingerprintJS.load();
+                const result = await fp.get();
+                const fingerprint = result.visitorId;
+
+                // 2. Enviar al servidor (Apps Script) para guardar
+                const url = new URL(SCRIPT_URL);
+                url.searchParams.append('action', 'enroll');
+                url.searchParams.append('agente', agentName);
+                url.searchParams.append('persistentId', persistentId);
+                url.searchParams.append('fingerprint', fingerprint);
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.status === 'enrolled') {
+                    // 3. Guardar el ID en el navegador del agente
+                    localStorage.setItem(LOCAL_STORAGE_KEY, persistentId);
+                    messageDiv.textContent = `¡Éxito! Dispositivo enrolado para ${agentName}.`;
+                    messageDiv.style.color = 'green';
+                    enrollButton.style.display = 'none'; // Ocultar botón
+                } else {
+                    throw new Error(data.reason || 'Error al enrolar');
+                }
+
+            } catch (error) {
+                messageDiv.textContent = `Error: ${error.message}`;
+                messageDiv.style.color = 'red';
+                enrollButton.disabled = false;
+            }
+        }
+
+        enrollButton.addEventListener('click', enrollDevice);
+    </script>
+</body>
+</html>
