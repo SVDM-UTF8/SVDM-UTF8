@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso Administrativo - Sistema de Control</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 400px;
+            overflow: hidden;
+            color: #333;
+        }
+
+        .login-header {
+            background: linear-gradient(135deg, #0f3460, #16213e);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-bottom: 3px solid #e94560;
+        }
+
+        .login-header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .login-header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .login-content {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-login {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            margin-top: 10px;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            color: #6c757d;
+            font-size: 12px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 10px;
+            color: #6c757d;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+
+            0%,
+            20% {
+                content: '.';
+            }
+
+            40% {
+                content: '..';
+            }
+
+            60%,
+            100% {
+                content: '...';
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>🔐 Acceso restringido</h1>
+            <p>Sistema de Control de Acceso a Dispositivos Móviles</p>
+        </div>
+
+        <div class="login-content">
+            <div id="loginAlert"></div>
+
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="username">Usuario:</label>
+                    <input type="text" id="username" name="username" required autocomplete="username">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Contraseña:</label>
+                    <input type="password" id="password" name="password" required autocomplete="current-password">
+                </div>
+
+                <button type="submit" class="btn-login" id="loginButton">
+                    🔑 Iniciar Sesión
+                </button>
+            </form>
+
+            <div class="login-footer">
+                <p>Acceso restringido al personal autorizado</p>
+                <p id="versionInfo">v1.0 - Sistema Seguro</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ================================================================
+        // CONFIGURACIÓN - ACTUALIZAR CON TUS CREDENCIALES
+        // ================================================================
+        const ADMIN_CREDENTIALS = {
+            username: "SPFU35",
+            password: "Sgou35spf" 
+        };
+
+        const SESSION_DURATION = 2 * 60 * 60 * 1000; // 2 horas en milisegundos
+
+        // ================================================================
+        // MANEJO DE LOGIN
+        // ================================================================
+        async function handleLogin(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const loginButton = document.getElementById('loginButton');
+
+            // Validaciones básicas
+            if (!username || !password) {
+                showAlert('Por favor complete todos los campos', 'danger');
+                return;
+            }
+
+            // Deshabilitar botón durante el proceso
+            loginButton.disabled = true;
+            loginButton.innerHTML = '<div class="loading">Verificando</div>';
+
+            try {
+                // Simular delay de seguridad (opcional)
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Verificar credenciales
+                if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+                    // Crear sesión segura
+                    createSecureSession();
+                    
+                    showAlert('✅ Acceso concedido. Redirigiendo...', 'info');
+                    
+                    // Redirigir al panel de administración
+                    setTimeout(() => {
+                        window.location.href = 'admin.html';
+                    }, 1000);
+                } else {
+                    throw new Error('Credenciales incorrectas');
+                }
+
+            } catch (error) {
+                showAlert('❌ ' + error.message, 'danger');
+                
+                // Rehabilitar botón
+                loginButton.disabled = false;
+                loginButton.textContent = '🔑 Iniciar Sesión';
+                
+                // Limpiar campo de contraseña por seguridad
+                document.getElementById('password').value = '';
+            }
+        }
+
+        // ================================================================
+        // GESTIÓN DE SESIONES SEGURAS
+        // ================================================================
+        function createSecureSession() {
+            const sessionData = {
+                username: ADMIN_CREDENTIALS.username,
+                loginTime: Date.now(),
+                expiry: Date.now() + SESSION_DURATION,
+                token: generateSecurityToken()
+            };
+
+            // Guardar en localStorage
+            localStorage.setItem('adminSession', JSON.stringify(sessionData));
+
+            // Guardar también en sessionStorage para mayor seguridad
+            sessionStorage.setItem('adminAuth', sessionData.token);
+
+            // Establecer cookie de sesión (opcional)
+            document.cookie = `adminSession=${sessionData.token}; max-age=${SESSION_DURATION / 1000}; path=/; SameSite=Strict`;
+        }
+
+        function generateSecurityToken() {
+            const timestamp = Date.now().toString(36);
+            const random = Math.random().toString(36).substring(2, 15);
+            return 'admin_' + btoa(timestamp + random).replace(/[^a-zA-Z0-9]/g, '').substring(0, 32);
+        }
+
+        // ================================================================
+        // UTILIDADES
+        // ================================================================
+        function showAlert(message, type) {
+            const alertDiv = document.getElementById('loginAlert');
+            alertDiv.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+        }
+
+        // ================================================================
+        // PROTECCIÓN CONTRA ATAQUES BÁSICOS
+        // ================================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            // Prevenir inspección de contraseña
+            document.getElementById('password').addEventListener('copy', function(e) {
+                e.preventDefault();
+            });
+
+            document.getElementById('password').addEventListener('paste', function(e) {
+                e.preventDefault();
+            });
+
+            // Verificar si ya hay una sesión activa
+            checkExistingSession();
+        });
+
+        function checkExistingSession() {
+            try {
+                const sessionData = localStorage.getItem('adminSession');
+                if (sessionData) {
+                    const session = JSON.parse(sessionData);
+                    
+                    // Verificar si la sesión sigue siendo válida
+                    if (session.expiry > Date.now()) {
+                        // Redirigir automáticamente si la sesión es válida
+                        window.location.href = 'admin.html';
+                    } else {
+                        // Limpiar sesión expirada
+                        clearSession();
+                    }
+                }
+            } catch (error) {
+                console.log('No hay sesión activa');
+            }
+        }
+
+        function clearSession() {
+            localStorage.removeItem('adminSession');
+            sessionStorage.removeItem('adminAuth');
+            document.cookie = 'adminSession=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        }
+
+        // Prevenir acceso mediante el botón atrás
+        window.history.pushState(null, null, window.location.href);
+        window.onpopstate = function() {
+            window.history.go(1);
+        };
+    </script>
+</body>
+
+</html>

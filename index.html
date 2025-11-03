@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Control de Acceso a Dispositivos Móviles</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 500px;
+            overflow: hidden;
+            color: #333;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0f3460, #16213e);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            border-bottom: 3px solid #e94560;
+        }
+
+        .logo {
+            width: 80px;
+            height: 120px;
+            margin: 0 auto 15px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 4px solid #e94560;
+            background: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 5px;
+        }
+
+        .header h1 {
+            font-size: 22px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 25px;
+        }
+
+        .agent-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .agent-card h2 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .agent-card .badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .badge-authorized {
+            background: #2ecc71;
+            color: white;
+        }
+
+        .badge-denied {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .badge-pending {
+            background: #f39c12;
+            color: white;
+        }
+
+        .status-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .status-section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #dee2e6;
+            font-size: 14px;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .info-value {
+            color: #212529;
+            text-align: right;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        button {
+            flex: 1;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-entry {
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+        }
+
+        .btn-exit {
+            background: linear-gradient(135deg, #ee0979, #ff6a00);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: #6c757d;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+
+            0%,
+            20% {
+                content: '.';
+            }
+
+            40% {
+                content: '..';
+            }
+
+            60%,
+            100% {
+                content: '...';
+            }
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .device-id-display {
+            background: #e9ecef;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            word-break: break-all;
+            text-align: center;
+            color: #495057;
+        }
+
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+        }
+
+        .timestamp {
+            font-size: 12px;
+            color: #6c757d;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 480px) {
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <img src="images.jpg" alt="Escudo Federal"
+                    onerror="this.parentElement.innerHTML='<div style=\'padding:35px;font-size:30px;\'>🛡️</div>'">
+            </div>
+            <h1>Sistema de Control de Acceso a Dispositivos Móviles</h1>
+            <p>Este sistema garantiza la confidencialidad y protección de la información mediante protocolos de
+                seguridad avanzados.</p>
+        </div>
+
+        <div class="content">
+            <div id="loading" class="loading">
+                Verificando dispositivo
+            </div>
+
+            <div id="mainContent" style="display: none;">
+                <div class="agent-card">
+                    <h2 id="agentName">---</h2>
+                    <div id="statusBadge" class="badge badge-pending">Verificando...</div>
+                </div>
+
+                <div class="status-section">
+                    <h3>📋 Información de Acceso</h3>
+                    <div class="info-row">
+                        <span class="info-label">Estado:</span>
+                        <span class="info-value" id="accessStatus">---</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Último Acceso:</span>
+                        <span class="info-value" id="lastAccess">---</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Dispositivo:</span>
+                        <span class="info-value" id="deviceType">---</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">ID Persistente:</span>
+                        <span class="info-value" id="persistentIdDisplay">---</span>
+                    </div>
+                </div>
+
+                <div id="accessActions" style="display: none;">
+                    <div class="action-buttons">
+                        <button id="btnEntry" class="btn-entry" onclick="registerEntry()">
+                            ✓ REGISTRAR ENTRADA
+                        </button>
+                        <button id="btnExit" class="btn-exit" onclick="registerExit()">
+                            ← REGISTRAR SALIDA
+                        </button>
+                    </div>
+                </div>
+
+                <div id="alertMessage"></div>
+
+                <div class="device-id-display">
+                    ID del Dispositivo: <span id="displayDeviceId">---</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>🔒 Sistema de Control de Acceso de Dispositivos Móviles</p>
+        <p id="systemTimestamp" class="timestamp"></p>
+    </div>
+
+    <script>
+        // ================================================================
+        // CONFIGURACIÓN - ACTUALIZAR CON TU URL
+        // ================================================================
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw9ZSVjHBBiBwfx92xR6LHUKA1KHG18t2JvdrqQdy7OnDmXPdMQAhkfIlqhyqhSPnPg/exec';
+
+        // ================================================================
+        // GESTOR DE ID MEJORADO
+        // ================================================================
+        class PersistentIdManager {
+            constructor() {
+                this.storageKey = 'federalAccessPersistentId';
+                this.deviceKey = 'federalAccessDeviceId';
+            }
+
+            async initialize() {
+                try {
+                    // 1. Obtener o crear deviceId
+                    const deviceId = await this.generateStableDeviceId();
+
+                    // 2. Usar la nueva función unificada del servidor
+                    const deviceInfo = await this.getOrCreateDeviceFromServer(deviceId);
+
+                    console.log('✅ Device ID:', deviceId);
+                    console.log('✅ Persistent ID:', deviceInfo.persistentId);
+                    console.log('✅ Dispositivo:', deviceInfo.dispositivo);
+
+                    return {
+                        deviceId: deviceId,
+                        persistentId: deviceInfo.persistentId,
+                        dispositivo: deviceInfo.dispositivo
+                    };
+
+                } catch (error) {
+                    console.error('❌ Error en initialize:', error);
+                    return this.createFallbackIds();
+                }
+            }
+
+            async generateStableDeviceId() {
+                // Intentar recuperar deviceId existente
+                let deviceId = this.getFromStorage(this.deviceKey);
+                if (deviceId) {
+                    console.log('📱 DeviceId recuperado:', deviceId);
+                    return deviceId;
+                }
+
+                // Generar nuevo deviceId más estable
+                deviceId = await this.generateHardwareId();
+                this.saveToStorage(this.deviceKey, deviceId);
+
+                console.log('🆕 Nuevo DeviceId generado:', deviceId);
+                return deviceId;
+            }
+
+            async generateHardwareId() {
+                const components = {
+                    ua: navigator.userAgent.substring(0, 100),
+                    platform: navigator.platform,
+                    language: navigator.language,
+                    screen: `${screen.width}x${screen.height}`,
+                    cores: navigator.hardwareConcurrency || 0,
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    touch: navigator.maxTouchPoints || 0,
+                    salt: Date.now().toString(36)
+                };
+
+                const str = JSON.stringify(components);
+
+                if (window.crypto && crypto.subtle) {
+                    try {
+                        const buffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+                        const hashArray = Array.from(new Uint8Array(buffer));
+                        return 'dev_' + hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 20);
+                    } catch (cryptoError) {
+                        console.warn('Crypto.subtle no disponible, usando fallback');
+                    }
+                }
+
+                // Fallback para navegadores sin crypto.subtle
+                return 'dev_' + this.simpleHash(str) + '_' + Date.now().toString(36).substring(0, 8);
+            }
+
+            async getOrCreateDeviceFromServer(deviceId) {
+                try {
+                    const url = `${SCRIPT_URL}?action=getOrCreateDevice&deviceId=${encodeURIComponent(deviceId)}&userAgent=${encodeURIComponent(navigator.userAgent)}`;
+                    console.log('🌐 Solicitando al servidor:', url);
+
+                    const response = await fetch(url);
+                    const result = await response.json();
+
+                    console.log('📡 Respuesta del servidor:', result);
+
+                    if (result.success && result.data && result.data.dispositivo) {
+                        const dispositivo = result.data.dispositivo;
+
+                        // Guardar persistentId en almacenamiento local
+                        if (dispositivo.persistentId) {
+                            this.saveToStorage(this.storageKey, dispositivo.persistentId);
+                        }
+
+                        return {
+                            persistentId: dispositivo.persistentId,
+                            dispositivo: dispositivo
+                        };
+                    } else {
+                        throw new Error(result.message || 'Error del servidor');
+                    }
+
+                } catch (error) {
+                    console.error('❌ Error comunicando con servidor:', error);
+                    throw error;
+                }
+            }
+
+            simpleHash(str) {
+                let hash = 0;
+                for (let i = 0; i < str.length; i++) {
+                    const char = str.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash;
+                }
+                return Math.abs(hash).toString(36);
+            }
+
+            saveToStorage(key, value) {
+                try {
+                    localStorage.setItem(key, value);
+
+                    const expires = new Date();
+                    expires.setFullYear(expires.getFullYear() + 1);
+                    document.cookie = `${key}=${value}; expires=${expires.toUTCString()}; path=/; SameSite=Strict`;
+
+                    console.log('💾 Guardado en storage:', key, value);
+                } catch (error) {
+                    console.error('❌ Error guardando en storage:', error);
+                }
+            }
+
+            getFromStorage(key) {
+                try {
+                    let value = localStorage.getItem(key);
+                    if (value) {
+                        console.log('📖 Leído de localStorage:', key, value);
+                        return value;
+                    }
+
+                    const cookies = document.cookie.split(';');
+                    for (let cookie of cookies) {
+                        const [name, val] = cookie.trim().split('=');
+                        if (name === key) {
+                            console.log('📖 Leído de cookie:', key, val);
+                            return decodeURIComponent(val);
+                        }
+                    }
+                } catch (error) {
+                    console.error('❌ Error leyendo storage:', error);
+                }
+                return null;
+            }
+
+            createFallbackIds() {
+                const timestamp = Date.now().toString(36);
+                const random = Math.random().toString(36).substring(2, 10);
+                return {
+                    deviceId: 'fb_dev_' + timestamp,
+                    persistentId: 'fb_perm_' + random,
+                    dispositivo: {
+                        nombre: 'Usuario Temporal',
+                        autorizado: false,
+                        estado: 'TEMPORAL'
+                    }
+                };
+            }
+        }
+
+        // ================================================================
+        // APLICACIÓN PRINCIPAL
+        // ================================================================
+        let currentDevice = null;
+        let currentAccess = null;
+
+        async function initializeApp() {
+            try {
+                showAlert('🔄 Inicializando sistema...', 'info');
+
+                const idManager = new PersistentIdManager();
+                currentDevice = await idManager.initialize();
+
+                document.getElementById('displayDeviceId').textContent = currentDevice.deviceId;
+                document.getElementById('persistentIdDisplay').textContent = currentDevice.persistentId;
+
+                await checkAccess();
+
+            } catch (error) {
+                console.error('❌ Error inicializando:', error);
+                showError('❌ Error al inicializar el sistema: ' + error.message);
+            }
+        }
+
+        async function checkAccess() {
+            try {
+                if (!currentDevice || !currentDevice.persistentId) {
+                    throw new Error('No se pudo obtener el ID persistente');
+                }
+
+                const url = `${SCRIPT_URL}?action=checkAccess&persistentId=${encodeURIComponent(currentDevice.persistentId)}`;
+                console.log('🔍 Verificando acceso:', url);
+
+                const response = await fetch(url);
+                const result = await response.json();
+
+                console.log('✅ Respuesta de acceso:', result);
+
+                if (result.success && result.data) {
+                    currentAccess = result.data;
+                    displayAccessInfo(result.data);
+                } else {
+                    showError('❌ Error al verificar acceso: ' + result.message);
+                }
+
+            } catch (error) {
+                console.error('❌ Error verificando acceso:', error);
+                showError('❌ Error de conexión con el servidor: ' + error.message);
+            }
+        }
+
+        function displayAccessInfo(data) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+
+            const nombre = data.dispositivo ? data.dispositivo.nombre : 'Usuario';
+            document.getElementById('agentName').textContent = nombre;
+
+            const badge = document.getElementById('statusBadge');
+            if (data.authorized) {
+                badge.textContent = '✓ AUTORIZADO';
+                badge.className = 'badge badge-authorized';
+                document.getElementById('accessActions').style.display = 'block';
+                showAlert('✅ Acceso autorizado', 'success');
+            } else {
+                badge.textContent = '⏳ PENDIENTE';
+                badge.className = 'badge badge-pending';
+                showAlert('⏳ Acceso pendiente de autorización. Contacte al administrador.', 'warning');
+            }
+
+            document.getElementById('accessStatus').textContent = data.authorized ? 'Autorizado' : 'Pendiente';
+            document.getElementById('lastAccess').textContent = new Date().toLocaleString('es-AR');
+            document.getElementById('deviceType').textContent = detectDeviceType();
+            document.getElementById('persistentIdDisplay').textContent = currentDevice.persistentId;
+
+            document.getElementById('systemTimestamp').textContent =
+                'Última actualización: ' + new Date().toLocaleString('es-AR');
+        }
+
+        async function registerEntry() {
+            await registerAccess('ENTRADA');
+        }
+
+        async function registerExit() {
+            await registerAccess('SALIDA');
+        }
+
+        async function registerAccess(action) {
+            if (!currentAccess || !currentAccess.authorized) {
+                showAlert('❌ No tiene autorización para registrar acceso', 'danger');
+                return;
+            }
+
+            const btnEntry = document.getElementById('btnEntry');
+            const btnExit = document.getElementById('btnExit');
+
+            btnEntry.disabled = true;
+            btnExit.disabled = true;
+
+            try {
+                const nombre = currentAccess.dispositivo ? currentAccess.dispositivo.nombre : 'Usuario';
+
+                const params = new URLSearchParams({
+                    action: action === 'ENTRADA' ? 'registerEntry' : 'registerExit',
+                    persistentId: currentDevice.persistentId,
+                    nombre: nombre,
+                    userAgent: navigator.userAgent,
+                    ip: 'client'
+                });
+
+                const url = `${SCRIPT_URL}?${params.toString()}`;
+                const response = await fetch(url);
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert(`✅ ${action} registrada exitosamente`, 'success');
+                    document.getElementById('lastAccess').textContent = new Date().toLocaleString('es-AR');
+                } else {
+                    showAlert('❌ Error: ' + result.message, 'danger');
+                }
+
+            } catch (error) {
+                console.error('❌ Error registrando acceso:', error);
+                showAlert('❌ Error de conexión', 'danger');
+            } finally {
+                btnEntry.disabled = false;
+                btnExit.disabled = false;
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.getElementById('alertMessage');
+            alertDiv.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => {
+                if (alertDiv.innerHTML.includes(message)) {
+                    alertDiv.innerHTML = '';
+                }
+            }, 5000);
+        }
+
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+            showAlert(message, 'danger');
+        }
+
+        function detectDeviceType() {
+            const ua = navigator.userAgent;
+            if (/Android/i.test(ua)) return 'Android';
+            if (/iPhone|iPad|iPod/i.test(ua)) return 'iOS';
+            if (/Windows/i.test(ua)) return 'Windows';
+            if (/Mac/i.test(ua)) return 'Mac';
+            if (/Linux/i.test(ua)) return 'Linux';
+            return 'Desconocido';
+        }
+
+        // Inicializar la aplicación cuando el DOM esté listo
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeApp);
+        } else {
+            initializeApp();
+        }
+    </script>
+</body>
+
+</html>
